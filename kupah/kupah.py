@@ -1,5 +1,6 @@
 # TODO implement from tinydb import TinyDB, Query
 from copy import deepcopy
+from abc import ABC, abstractmethod
 
 class Item:
     """
@@ -89,6 +90,25 @@ class Item:
 
     def cancel(self):
         self.tag = 'canceled'
+
+
+class Sale(ABC):
+    def __init__(self, code, name, applicable_items):
+        self.code = code
+        self.name = name
+        self.applicable_items = applicable_items
+
+    @abstractmethod
+    def apply_sale(self, item_list):
+        pass
+
+
+class XForYSale(Sale):
+    def __init__(self):
+        pass
+
+    def apply_sale(self, item_list):
+        pass
 
 
 class ItemList:
