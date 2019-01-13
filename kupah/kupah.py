@@ -1,6 +1,7 @@
 # TODO implement from tinydb import TinyDB, Query
-from copy import deepcopy
+from copy import copy, deepcopy
 from abc import ABC, abstractmethod
+
 
 class Item:
     """
@@ -19,7 +20,7 @@ class Item:
         self.price = price
         self.amount = amount
         self.by_weight = by_weight
-        self.tag = tag # TODO maybe this should be a set of tags
+        self.tag = tag  # TODO maybe this should be a set of tags
 
     @property
     def code(self):
@@ -28,10 +29,11 @@ class Item:
     @code.setter
     def code(self, code):
         try:
-            assert isinstance(code, str)
-            assert int(code) >= 0
+            if not (isinstance(code, str) and int(code) >= 0):
+                raise ValueError('code must be a string of digits')
+
             self.__code = code
-        except:
+        except ValueError:
             raise ValueError('code must be a string of digits')
 
     @property
@@ -40,7 +42,7 @@ class Item:
 
     @name.setter
     def name(self, name):
-        #if not isinstance(name, str):
+        # if not isinstance(name, str):
         #    raise TypeError('name must be a string')
         self.__name = name[:self.MAX_NAME_LENGTH]
 
@@ -50,7 +52,7 @@ class Item:
 
     @price.setter
     def price(self, price):
-        #if not isinstance(price, int):
+        # if not isinstance(price, int):
         #    raise TypeError('price must be an integer')
 
         self.__price = price
@@ -61,7 +63,7 @@ class Item:
 
     @amount.setter
     def amount(self, amount):
-        #if not isinstance(amount, int):
+        # if not isinstance(amount, int):
         #    raise TypeError('amount must be an integer')
 
         self.__amount = amount
@@ -72,7 +74,7 @@ class Item:
 
     @by_weight.setter
     def by_weight(self, by_weight):
-        #if not isinstance(by_weight, bool):
+        # if not isinstance(by_weight, bool):
         #    raise TypeError('by_weight must be a boolean')
 
         self.__by_weight = by_weight
@@ -120,12 +122,12 @@ class ItemList:
         return deepcopy(self.__items)
 
     def add(self, item):
-        #if not isinstance(item, Item):
+        # if not isinstance(item, Item):
         #    raise TypeError('item must be an Item')
 
         self.__items.append(item)
 
-    def find_all(self, code, include_canceled=False, tags=Item.STANDARD_TAGS):
+    def find_all(self, code, include_canceled=False, tags=None):
         """
         Finds all items with a given code
         :param code: the code to search for
@@ -133,6 +135,9 @@ class ItemList:
         :param tags: the tags to search for
         :return: a list containing all items with the given code
         """
+        if tags is None:
+            tags = copy(Item.STANDARD_TAGS)
+
         if include_canceled:
             tags += {'canceled'}
         res = []
@@ -142,7 +147,7 @@ class ItemList:
 
         return res
 
-    def find(self, code, include_canceled=False, tags=Item.STANDARD_TAGS):
+    def find(self, code, include_canceled=False, tags=None):
         """
         Finds the last item with a given code
         :param code: the code to search for
@@ -150,6 +155,9 @@ class ItemList:
         :param tags: the tags to search for
         :return: the last item with the given code
         """
+        if tags is None:
+            tags = copy(Item.STANDARD_TAGS)
+
         if include_canceled:
             tags += {'canceled'}
         for i in reversed(self.__items):
@@ -173,7 +181,7 @@ class ItemList:
         if not item:
             raise ValueError('item is not in list')
 
-        cancelation_item = deepcopy(item)
+        cancellation_item = deepcopy(item)
 
         if item.by_weight:
             item.cancel()
@@ -196,11 +204,10 @@ class ItemList:
                 if amount_copy == 0:
                     break
 
-
-        cancelation_item.price *= -1
-        cancelation_item.amount = amount
-        cancelation_item.tag = 'cancelation'
-        self.add(cancelation_item)
+        cancellation_item.price *= -1
+        cancellation_item.amount = amount
+        cancellation_item.tag = 'cancellation'
+        self.add(cancellation_item)
 
     def inc_last(self):
         last = None
@@ -213,7 +220,7 @@ class ItemList:
             return
 
         if last.by_weight:
-            raise ValueError('cannot increment a weighable item')\
+            raise ValueError('cannot increment a weighable item')
 
         last.amount += 1
 
@@ -225,7 +232,6 @@ class ItemList:
     @property
     def subtotal(self):
         return sum(map(lambda i: i.cost, self.__items))
-
 
     def __len__(self):
         res = 0
